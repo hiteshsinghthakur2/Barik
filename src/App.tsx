@@ -138,10 +138,7 @@ export default function App() {
 
     try {
       // Use custom key if provided, otherwise use default instance
-      let aiClient = ai;
-      if (settings.geminiKey) {
-        aiClient = new GoogleGenAI({ apiKey: settings.geminiKey });
-      }
+      const aiClient = getAiClient(settings.geminiKey);
 
       // Wrap file reading in a promise to await it
       const base64Content = await new Promise<string>((resolve, reject) => {
