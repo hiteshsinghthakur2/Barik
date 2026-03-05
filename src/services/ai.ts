@@ -11,7 +11,7 @@ export const MODELS = {
 // If not, try to use the environment variable.
 // If neither, it will eventually fail when called, but won't crash the app on load.
 export const getAiClient = (apiKey?: string) => {
-  const key = apiKey || process.env.GEMINI_API_KEY || "";
+  const key = apiKey || process.env.GEMINI_API_KEY || process.env.API_KEY || "";
   return new GoogleGenAI({ apiKey: key });
 };
 

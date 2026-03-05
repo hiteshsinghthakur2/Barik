@@ -229,7 +229,7 @@ export default function App() {
     setError(null);
 
     try {
-      const apiKey = settings.geminiKey || process.env.GEMINI_API_KEY;
+      const apiKey = settings.geminiKey || process.env.GEMINI_API_KEY || process.env.API_KEY;
       
       if (!apiKey) {
         throw new Error("Gemini API Key is missing. Please add it in Settings (gear icon).");
@@ -373,15 +373,6 @@ export default function App() {
     setDrafts(prev => prev.map(d => d.id === draftId ? { ...d, status: 'generating_video' } : d));
 
     try {
-        // Use custom key if provided, otherwise use default instance
-        const aiClient = getAiClient(settings.geminiKey);
-        let apiKey = settings.geminiKey || process.env.GEMINI_API_KEY;
-
-        // Check for API Key first (client-side check for Veo)
-        if (!apiKey) {
-             throw new Error("Gemini API Key is missing. Please check Settings.");
-        }
-
         // Check if user has selected a paid key for Veo (required)
         // @ts-ignore - window.aistudio is injected by the environment
         if (window.aistudio && window.aistudio.hasSelectedApiKey && !settings.geminiKey) {
@@ -391,6 +382,15 @@ export default function App() {
                  // @ts-ignore
                  await window.aistudio.openSelectKey();
             }
+        }
+
+        // Re-instantiate client to ensure we have the latest key (including platform-selected one)
+        const aiClient = getAiClient(settings.geminiKey);
+        let apiKey = settings.geminiKey || process.env.GEMINI_API_KEY || process.env.API_KEY;
+
+        // Check for API Key first (client-side check for Veo)
+        if (!apiKey) {
+             throw new Error("Gemini API Key is missing. Please check Settings.");
         }
 
       let operation = await aiClient.models.generateVideos({
@@ -431,22 +431,61 @@ export default function App() {
 
     } catch (err: any) {
       console.error("Video generation failed", err);
-      setError(`Video generation failed: ${err.message}`);
-      setDrafts(prev => prev.map(d => d.id === draftId ? { ...d, status: 'draft' } : d));
-      if (err.message.includes('API key')) {
+      
+      let errorMessage = `Video generation failed: ${err.message}`;
+      
+      // Handle Quota Exceeded (429)
+      if (err.status === 429 || err.message?.includes('429') || err.message?.includes('quota')) {
+        errorMessage = "Video generation quota exceeded. Please use a paid API key with higher limits in Settings.";
+        setShowSettings(true);
+      } else if (err.message.includes('API key')) {
         setShowSettings(true);
       }
+
+      setError(errorMessage);
+      setDrafts(prev => prev.map(d => d.id === draftId ? { ...d, status: 'draft' } : d));
     }
   };
 
-  const handlePostToFacebook = (draftId: string) => {
+  const handlePostToFacebook = async (draftId: string) => {
     if (!user) {
         setError("You must be logged in to Facebook to post.");
         return;
     }
 
+    const draft = drafts.find(d => d.id === draftId);
+    if (!draft) return;
+
+    // Optimistic update
     setDrafts(prev => prev.map(d => d.id === draftId ? { ...d, status: 'posted' } : d));
-    alert("Successfully posted to Facebook! (Simulation)");
+
+    try {
+      const response = await fetch('/api/facebook/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accessToken: user.accessToken,
+          message: draft.caption,
+          videoUrl: draft.videoUrl // Pass the video URL if available
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to post to Facebook');
+      }
+
+      alert(`Successfully posted to Page: ${data.pageName}!`);
+
+    } catch (err: any) {
+      console.error("Posting failed:", err);
+      setError(`Failed to post: ${err.message}`);
+      // Revert status on failure
+      setDrafts(prev => prev.map(d => d.id === draftId ? { ...d, status: 'ready' } : d));
+    }
   };
 
   // Group schedule by week
