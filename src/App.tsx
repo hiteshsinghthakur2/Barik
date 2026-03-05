@@ -302,7 +302,7 @@ export default function App() {
 
     try {
       // Use custom key if provided, otherwise use default instance
-      const apiKey = settings.geminiKey || process.env.GEMINI_API_KEY;
+      const apiKey = settings.geminiKey || process.env.GEMINI_API_KEY || process.env.API_KEY;
       
       if (!apiKey) {
         throw new Error("Gemini API Key is missing. Please add it in Settings (gear icon).");
@@ -327,7 +327,7 @@ export default function App() {
         }
       `;
 
-      const result = await aiClient.models.generateContent({
+      const result = await generateContentWithRetry(aiClient, {
         model: MODELS.TEXT,
         contents: prompt,
         config: {
