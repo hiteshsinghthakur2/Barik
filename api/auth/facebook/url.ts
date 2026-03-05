@@ -38,7 +38,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     client_id: clientId,
     redirect_uri: finalRedirectUri,
     state: state,
-    scope: 'public_profile,pages_manage_posts,pages_read_engagement', 
+    scope: 'public_profile,pages_manage_posts,pages_read_engagement,pages_show_list', 
     response_type: 'code',
   });
 
