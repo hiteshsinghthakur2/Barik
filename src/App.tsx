@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ai, MODELS } from './services/ai';
+import { getAiClient, MODELS } from './services/ai';
 import { Facebook, Send, Video, FileText, Loader2, CheckCircle, AlertCircle, Play, HelpCircle, X, Copy, Check, Settings, Key, Upload, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GoogleGenAI } from "@google/genai";
@@ -226,10 +226,7 @@ export default function App() {
     setError(null);
 
     try {
-      let aiClient = ai;
-      if (settings.geminiKey) {
-        aiClient = new GoogleGenAI({ apiKey: settings.geminiKey });
-      }
+      const aiClient = getAiClient(settings.geminiKey);
 
       const prompt = `
         You are a social media marketing expert. 
@@ -296,10 +293,7 @@ export default function App() {
 
     try {
       // Use custom key if provided, otherwise use default instance
-      let aiClient = ai;
-      if (settings.geminiKey) {
-        aiClient = new GoogleGenAI({ apiKey: settings.geminiKey });
-      }
+      const aiClient = getAiClient(settings.geminiKey);
 
       // 1. Generate Video Prompt & Caption
       const prompt = `
@@ -365,13 +359,8 @@ export default function App() {
 
     try {
         // Use custom key if provided, otherwise use default instance
-        let aiClient = ai;
-        let apiKey = process.env.GEMINI_API_KEY;
-
-        if (settings.geminiKey) {
-          aiClient = new GoogleGenAI({ apiKey: settings.geminiKey });
-          apiKey = settings.geminiKey;
-        }
+        const aiClient = getAiClient(settings.geminiKey);
+        let apiKey = settings.geminiKey || process.env.GEMINI_API_KEY;
 
         // Check for API Key first (client-side check for Veo)
         if (!apiKey) {
