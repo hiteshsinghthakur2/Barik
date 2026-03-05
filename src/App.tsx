@@ -809,8 +809,8 @@ export default function App() {
                             <div className="pt-2">
                               <button
                                 onClick={() => handlePostToFacebook(draft.id)}
-                                disabled={draft.status !== 'ready' || !user}
-                                className="w-full flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166fe5] disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl font-medium transition-colors"
+                                disabled={draft.status === 'generating_video' || draft.status === 'posted' || !user}
+                                className="w-full flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166fe5] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl font-medium transition-colors"
                               >
                                 {draft.status === 'posted' ? (
                                   <>
@@ -820,7 +820,7 @@ export default function App() {
                                 ) : (
                                   <>
                                     <Facebook className="w-5 h-5" />
-                                    {user ? 'Post to Facebook' : 'Login to Post'}
+                                    {user ? (draft.status === 'ready' ? 'Post Video & Text' : 'Post Text Only') : 'Login to Post'}
                                   </>
                                 )}
                               </button>
