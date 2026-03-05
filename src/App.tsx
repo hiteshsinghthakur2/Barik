@@ -459,6 +459,27 @@ export default function App() {
     // Optimistic update
     setDrafts(prev => prev.map(d => d.id === draftId ? { ...d, status: 'posted' } : d));
 
+    // Prepare payload
+    let videoData = draft.videoUrl;
+
+    // If it's a blob URL, convert to Base64
+    if (draft.videoUrl && draft.videoUrl.startsWith('blob:')) {
+      try {
+        const blobResponse = await fetch(draft.videoUrl);
+        const blob = await blobResponse.blob();
+        videoData = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.error("Failed to convert blob to base64", e);
+        setError("Failed to process video for upload.");
+        setDrafts(prev => prev.map(d => d.id === draftId ? { ...d, status: 'ready' } : d));
+        return;
+      }
+    }
+
     try {
       const response = await fetch('/api/facebook/post', {
         method: 'POST',
@@ -468,7 +489,7 @@ export default function App() {
         body: JSON.stringify({
           accessToken: user.accessToken,
           message: draft.caption,
-          videoUrl: draft.videoUrl // Pass the video URL if available
+          videoUrl: videoData // Send Base64 data
         }),
       });
 

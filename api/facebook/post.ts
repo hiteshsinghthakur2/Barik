@@ -31,15 +31,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (videoUrl) {
       // 2a. Post Video
-      // Note: Posting video via URL is supported by Graph API
-      const videoParams = new URLSearchParams({
-        access_token: pageAccessToken,
-        description: message,
-        file_url: videoUrl, // Graph API can download from URL
-      });
+      // We receive the video as a Base64 data URI or a public URL.
+      // If it's a data URI (starts with data:), we need to upload it as a file.
+      
+      const formData = new FormData();
+      formData.append('access_token', pageAccessToken);
+      formData.append('description', message);
 
-      const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/videos?${videoParams.toString()}`, {
+      if (videoUrl.startsWith('data:') || videoUrl.length > 1000) {
+        // Assume Base64 data
+        // Extract the base64 part
+        const base64Data = videoUrl.split(',')[1];
+        const binaryData = Buffer.from(base64Data, 'base64');
+        const blob = new Blob([binaryData], { type: 'video/mp4' });
+        formData.append('source', blob, 'video.mp4');
+      } else {
+        // Assume public URL (fallback)
+        formData.append('file_url', videoUrl);
+      }
+
+      const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/videos`, {
         method: 'POST',
+        body: formData,
       });
       postResponse = await response.json();
 
