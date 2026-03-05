@@ -9,6 +9,7 @@ import { GoogleGenAI } from "@google/genai";
 interface User {
   id: string;
   name: string;
+  accessToken?: string;
   picture?: {
     data: {
       url: string;
@@ -112,8 +113,13 @@ export default function App() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
-        setUser(event.data.user);
-        console.log("Logged in with token:", event.data.accessToken);
+        // Merge user data with access token
+        const userData = {
+          ...event.data.user,
+          accessToken: event.data.accessToken
+        };
+        setUser(userData);
+        console.log("Logged in user:", userData);
       }
     };
     window.addEventListener('message', handleMessage);
