@@ -861,8 +861,16 @@ export default function App() {
                         <div className="flex gap-3">
                           <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold shrink-0 text-xs">2</div>
                           <div>
-                            <p className="font-medium text-slate-900">Add Facebook Login</p>
-                            <p className="mt-1">Click "Add Product" → "Facebook Login" → "Set up".</p>
+                            <p className="font-medium text-slate-900">Add Facebook Login Product</p>
+                            <p className="mt-1">
+                              If <strong>Facebook Login</strong> is not in the left sidebar:
+                              <br />
+                              1. Click <strong>Dashboard</strong> in the left sidebar.
+                              <br />
+                              2. Scroll down to "Add a product".
+                              <br />
+                              3. Find "Facebook Login" and click <strong>Set up</strong>.
+                            </p>
                           </div>
                         </div>
 
@@ -871,7 +879,11 @@ export default function App() {
                           <div className="w-full">
                             <p className="font-medium text-slate-900">Configure Redirect URI</p>
                             <p className="mt-1 mb-2">
-                              Go to <strong>Facebook Login {'>'} Settings</strong>. Find "Valid OAuth Redirect URIs" and paste:
+                              1. In the left sidebar, expand <strong>Facebook Login</strong>.
+                              <br />
+                              2. Click <strong>Settings</strong> (under Facebook Login, NOT the main App Settings).
+                              <br />
+                              3. Find "Valid OAuth Redirect URIs" and paste:
                             </p>
                             <div className="flex items-center gap-2">
                               <code className="flex-1 bg-white p-2 rounded border border-slate-200 text-xs font-mono break-all">
