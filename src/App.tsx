@@ -174,7 +174,7 @@ export default function App() {
 
       console.log("Sending file to Gemini...", file.type);
 
-      const result = await aiClient.models.generateContent({
+      const result = await generateContentWithRetry(aiClient, {
         model: MODELS.TEXT,
         contents: [
           {
