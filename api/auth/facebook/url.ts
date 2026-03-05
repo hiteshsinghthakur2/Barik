@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   // Facebook OAuth: Get URL
-  const { client_id, client_secret } = req.query;
+  const { client_id, client_secret, redirect_uri } = req.query;
   
   // Use provided credentials or fallback to env
   const clientId = (client_id as string) || process.env.FACEBOOK_CLIENT_ID;
@@ -21,17 +21,22 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   };
   const state = Buffer.from(JSON.stringify(stateData)).toString('base64');
 
-  // Determine redirect URI based on environment
-  // In Vercel, req.headers.host gives the domain
-  const protocol = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers.host;
-  const baseUrl = `${protocol}://${host}`;
-  
-  const redirectUri = `${process.env.APP_URL || baseUrl}/api/auth/facebook/callback`;
+  // Determine redirect URI
+  // 1. Prefer the one passed from client (guarantees match with what user sees)
+  // 2. Fallback to server-side construction
+  let finalRedirectUri = redirect_uri as string;
+
+  if (!finalRedirectUri) {
+    // In Vercel, req.headers.host gives the domain
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers.host;
+    const baseUrl = `${protocol}://${host}`;
+    finalRedirectUri = `${process.env.APP_URL || baseUrl}/api/auth/facebook/callback`;
+  }
   
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: redirectUri,
+    redirect_uri: finalRedirectUri,
     state: state,
     scope: 'public_profile,pages_manage_posts,pages_read_engagement', 
     response_type: 'code',
