@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getAiClient, MODELS } from './services/ai';
+import { getAiClient, MODELS, generateContentWithRetry } from './services/ai';
 import { Facebook, Send, Video, FileText, Loader2, CheckCircle, AlertCircle, Play, HelpCircle, X, Copy, Check, Settings, Key, Upload, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GoogleGenAI } from "@google/genai";
@@ -138,7 +138,13 @@ export default function App() {
 
     try {
       // Use custom key if provided, otherwise use default instance
-      const aiClient = getAiClient(settings.geminiKey);
+      const apiKey = settings.geminiKey || process.env.GEMINI_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error("Gemini API Key is missing. Please add it in Settings (gear icon).");
+      }
+
+      const aiClient = getAiClient(apiKey);
 
       // Wrap file reading in a promise to await it
       const base64Content = await new Promise<string>((resolve, reject) => {
@@ -223,7 +229,13 @@ export default function App() {
     setError(null);
 
     try {
-      const aiClient = getAiClient(settings.geminiKey);
+      const apiKey = settings.geminiKey || process.env.GEMINI_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error("Gemini API Key is missing. Please add it in Settings (gear icon).");
+      }
+
+      const aiClient = getAiClient(apiKey);
 
       const prompt = `
         You are a social media marketing expert. 
@@ -290,7 +302,13 @@ export default function App() {
 
     try {
       // Use custom key if provided, otherwise use default instance
-      const aiClient = getAiClient(settings.geminiKey);
+      const apiKey = settings.geminiKey || process.env.GEMINI_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error("Gemini API Key is missing. Please add it in Settings (gear icon).");
+      }
+
+      const aiClient = getAiClient(apiKey);
 
       // 1. Generate Video Prompt & Caption
       const prompt = `
