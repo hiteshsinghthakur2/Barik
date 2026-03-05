@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import axios from 'axios';
+import FormData from 'form-data';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -13,8 +15,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // 1. Get User Pages
-    const pagesResponse = await fetch(`https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`);
-    const pagesData = await pagesResponse.json();
+    const pagesResponse = await axios.get(`https://graph.facebook.com/v18.0/me/accounts`, {
+      params: { access_token: accessToken }
+    });
+    
+    const pagesData = pagesResponse.data;
 
     if (!pagesData.data || pagesData.data.length === 0) {
       return res.status(400).json({ error: 'No Facebook Pages found for this user.' });
@@ -31,47 +36,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (videoUrl) {
       // 2a. Post Video
-      // We receive the video as a Base64 data URI or a public URL.
-      // If it's a data URI (starts with data:), we need to upload it as a file.
-      
       const formData = new FormData();
       formData.append('access_token', pageAccessToken);
       formData.append('description', message);
 
       if (videoUrl.startsWith('data:') || videoUrl.length > 1000) {
         // Assume Base64 data
-        // Extract the base64 part
         const base64Data = videoUrl.split(',')[1];
         const binaryData = Buffer.from(base64Data, 'base64');
-        const blob = new Blob([binaryData], { type: 'video/mp4' });
-        formData.append('source', blob, 'video.mp4');
+        formData.append('source', binaryData, { filename: 'video.mp4', contentType: 'video/mp4' });
       } else {
         // Assume public URL (fallback)
         formData.append('file_url', videoUrl);
       }
 
-      const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/videos`, {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post(`https://graph.facebook.com/v18.0/${pageId}/videos`, formData, {
+        headers: {
+          ...formData.getHeaders(),
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
       });
-      postResponse = await response.json();
+      postResponse = response.data;
 
     } else {
       // 2b. Post Text/Link
-      const feedParams = new URLSearchParams({
-        access_token: pageAccessToken,
-        message: message,
+      const response = await axios.post(`https://graph.facebook.com/v18.0/${pageId}/feed`, null, {
+        params: {
+          access_token: pageAccessToken,
+          message: message,
+        }
       });
-
-      const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/feed?${feedParams.toString()}`, {
-        method: 'POST',
-      });
-      postResponse = await response.json();
-    }
-
-    if (postResponse.error) {
-      console.error('Facebook API Error:', postResponse.error);
-      return res.status(500).json({ error: postResponse.error.message });
+      postResponse = response.data;
     }
 
     return res.status(200).json({ 
@@ -81,7 +77,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
   } catch (error: any) {
-    console.error('Server Error:', error);
-    return res.status(500).json({ error: error.message });
+    console.error('Facebook API Error:', error.response?.data || error.message);
+    return res.status(500).json({ 
+      error: error.response?.data?.error?.message || error.message 
+    });
   }
 }
