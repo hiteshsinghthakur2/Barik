@@ -895,6 +895,9 @@ export default function App() {
                                 Open Settings Page Directly ↗
                               </a>
                             </div>
+                            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+                              <strong>Important:</strong> You must also add <strong>{window.location.hostname}</strong> to the "App Domains" field in <strong>App Settings {'>'} Basic</strong>.
+                            </div>
                           </div>
                         </div>
 
